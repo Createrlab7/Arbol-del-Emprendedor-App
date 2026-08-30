@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>El Árbol del Emprendedor · CreaterLab</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#333365">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Árbol Emprendedor">
+<style>
+  :root{
+    --navy:#333365;
+    --teal:#36CBCF;
+    --gold:#F7CC01;
+    --bloom:#9B72CF;
+    --copper:#8B6F47;
+    --tealdark:#1a8f92;
+    --charcoal:#2b2b2b;
+    --paper:#F7F4EC;
+    --paper-dark:#EFE9DA;
+    --line:#d8d0bb;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--charcoal);font-family:'Georgia','Iowan Old Style',serif;min-height:100vh;}
+  .ui{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+  .app{max-width:960px;margin:0 auto;padding:32px 20px 80px;}
+  .brand{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:6px;}
+  .brand-name{font-size:14px;text-transform:uppercase;letter-spacing:0.15em;color:var(--navy);font-weight:700;}
+  .brand-tag{font-size:12px;color:#8a8470;}
+
+  .screen{display:none;}
+  .screen.active{display:block;animation:fadeIn .4s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+  .hero{text-align:center;padding:20px 10px 10px;}
+  .hero h1{font-size:34px;color:var(--navy);margin:0 0 10px;line-height:1.2;letter-spacing:-0.01em;}
+  .hero p{color:#5c5748;font-size:15px;max-width:540px;margin:0 auto 24px;line-height:1.55;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:26px;box-shadow:0 2px 18px rgba(51,51,101,0.06);}
+  label.field-label{display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:0.08em;color:var(--navy);margin-bottom:6px;font-family:inherit;}
+  input[type=text],input[type=date],textarea{width:100%;padding:14px 14px;border:1.5px solid var(--line);border-radius:8px;font-family:'Georgia',serif;font-size:16px;background:#fdfcf8;color:var(--charcoal);}
+  textarea{resize:vertical;min-height:70px;line-height:1.5;}
+  input:focus,textarea:focus{outline:none;border-color:var(--teal);}
+  .field{margin-bottom:16px;}
+  .btn{display:inline-block;background:var(--navy);color:#fff;border:none;padding:15px 26px;border-radius:30px;font-size:14px;letter-spacing:0.03em;cursor:pointer;font-family:inherit;transition:transform .15s ease,background .15s ease;min-height:48px;}
+  .btn:hover{transform:translateY(-1px);background:#242450;}
+  .btn:disabled{background:#b9b6c9;cursor:not-allowed;transform:none;}
+  .btn-gold{background:var(--gold);color:var(--navy);font-weight:700;}
+  .btn-gold:hover{background:#e0ba00;}
+  .btn-row{display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap;}
+
+  .tree-wrap{position:relative;display:flex;flex-direction:column;align-items:center;margin:6px 0 6px;}
+  svg{width:100%;max-width:440px;height:auto;}
+  .node{cursor:pointer;}
+  .node circle{transition:fill .25s ease,stroke .25s ease;}
+  .node:hover circle{filter:brightness(1.06);}
+  .node text.node-glyph{font-family:-apple-system,sans-serif;font-weight:700;font-size:15px;pointer-events:none;}
+  .node text.node-label{font-family:'Georgia',serif;font-size:11px;letter-spacing:0.12em;fill:var(--navy);pointer-events:none;}
+
+  .word-guide{background:var(--paper-dark);border-radius:10px;padding:10px 16px;font-size:12.5px;color:#5c5748;text-align:center;margin:14px auto;max-width:460px;}
+
+  .status-row{display:flex;justify-content:center;gap:16px;margin:16px 0 6px;flex-wrap:wrap;}
+  .status-chip{display:flex;align-items:center;gap:6px;font-size:12px;color:#5c5748;}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--line);}
+  .dot.done{background:var(--teal);}
+  .hint{text-align:center;color:#8a8470;font-size:13px;margin-top:6px;}
+
+  .overlay{position:fixed;inset:0;background:rgba(43,43,43,0.45);display:none;align-items:flex-end;justify-content:center;z-index:50;}
+  .overlay.open{display:flex;}
+  @media(min-width:640px){.overlay{align-items:center;}}
+  .panel{background:var(--paper);width:100%;max-width:560px;max-height:88vh;overflow-y:auto;border-radius:20px 20px 0 0;padding:28px 24px 30px;box-shadow:0 -10px 40px rgba(0,0,0,0.2);animation:slideUp .3s ease;}
+  @media(min-width:640px){.panel{border-radius:18px;animation:popIn .25s ease;}}
+  @keyframes slideUp{from{transform:translateY(40px);opacity:0;}to{transform:none;opacity:1;}}
+  @keyframes popIn{from{transform:scale(.96);opacity:0;}to{transform:none;opacity:1;}}
+  .panel-eyebrow{font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px;}
+  .panel h2{margin:0 0 4px;font-size:26px;color:var(--navy);}
+  .panel .sub{color:#8a8470;font-size:13px;margin-bottom:10px;}
+  .panel-guide{background:var(--paper-dark);border-radius:8px;padding:8px 12px;font-size:12px;color:#5c5748;margin-bottom:18px;}
+  .q{margin-bottom:18px;}
+  .q label{display:block;font-size:15px;margin-bottom:8px;color:var(--charcoal);line-height:1.4;}
+  .wc{font-size:11px;color:#a39d88;text-align:right;margin-top:4px;font-family:-apple-system,sans-serif;}
+  .wc.over{color:#c0392b;}
+  .panel-actions{display:flex;justify-content:space-between;align-items:center;margin-top:22px;}
+  .link-btn{background:none;border:none;color:#8a8470;font-family:inherit;font-size:13px;cursor:pointer;text-decoration:underline;}
+
+  .diag-header{text-align:center;margin-bottom:20px;}
+  .diag-header h1{color:var(--navy);font-size:30px;margin-bottom:6px;}
+  .diag-section{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-bottom:16px;border-left:5px solid var(--teal);}
+  .diag-section.gold{border-left-color:var(--gold);}
+  .diag-section.bloom{border-left-color:var(--bloom);}
+  .diag-section h3{margin:0 0 10px;color:var(--navy);font-size:18px;}
+  .diag-section p{margin:0 0 8px;line-height:1.6;font-size:15px;color:#3a3a3a;}
+  .diag-section .rec{font-size:14px;color:#5c5748;font-style:italic;}
+  .footer-brand{text-align:center;margin-top:30px;padding-top:22px;border-top:1px solid var(--line);color:#8a8470;font-size:12px;}
+  .footer-brand b{color:var(--navy);}
+  .score-banner{text-align:center;background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;margin-bottom:16px;}
+  .score-number{font-size:52px;font-weight:700;font-family:'Georgia',serif;line-height:1;}
+  .score-label{font-size:14px;text-transform:uppercase;letter-spacing:0.1em;margin-top:6px;font-family:-apple-system,sans-serif;font-weight:700;}
+  .client-row{display:flex;justify-content:space-between;align-items:center;padding:11px 4px;border-bottom:1px solid var(--line);cursor:pointer;gap:10px;}
+  .client-row:last-child{border-bottom:none;}
+  .client-row:hover{background:var(--paper-dark);}
+  .client-row-main{min-width:0;}
+  .client-row-main b{display:block;color:var(--navy);font-size:14px;font-family:'Georgia',serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .client-row-sub{font-size:11.5px;color:#8a8470;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .client-row-score{font-weight:700;font-size:13px;white-space:nowrap;flex-shrink:0;}
+  .client-delete-btn{background:none;border:none;color:#c0392b;font-size:18px;cursor:pointer;padding:6px 8px;line-height:1;flex-shrink:0;border-radius:6px;}
+  .client-delete-btn:hover{background:#fbe9e7;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="brand">
+    <div class="brand-name ui">CreaterLab · Laboratorio de Ideas</div>
+    <div class="brand-tag ui">El Árbol del Emprendedor</div>
+  </div>
+
+  <!-- SCREEN 1: START -->
+  <div class="screen active" id="screen-start">
+    <div class="hero">
+      <h1>🌳 El Árbol del Emprendedor</h1>
+      <p>Cada negocio es un árbol. Hoy vamos a explorar el tuyo: raíz, tronco, flores, ramas, hojas y fruto — con la rigurosidad de un plan de mercadeo profesional, traducida a un lenguaje que cualquier emprendedor entiende y disfruta. Funciona sin conexión a internet.</p>
+    </div>
+
+    <div class="card ui" id="clients-card" style="margin-bottom:16px;display:none;">
+      <label class="field-label">📋 Clientes guardados en este dispositivo</label>
+      <div id="clients-list" style="margin-top:8px;"></div>
+    </div>
+
+    <div class="card ui">
+      <label class="field-label" style="margin-bottom:10px;display:block;">➕ Nuevo diagnóstico</label>
+      <div class="field"><label class="field-label">Nombre del emprendedor</label><input type="text" id="input-nombre" placeholder="Ej: Andrés Pérez"></div>
+      <div class="field"><label class="field-label">Nombre del negocio</label><input type="text" id="input-negocio" placeholder="Ej: Andrés Store"></div>
+      <div class="field"><label class="field-label">WhatsApp</label><input type="text" id="input-whatsapp" placeholder="Ej: 300 123 4567"></div>
+      <div class="field"><label class="field-label">Correo electrónico</label><input type="text" id="input-email" placeholder="Ej: nombre@correo.com"></div>
+      <div class="field"><label class="field-label">Dirección del negocio (incluye municipio)</label><input type="text" id="input-direccion" placeholder="Ej: Cra 45 #12-30, Chigorodó, Antioquia"></div>
+      <div class="field"><label class="field-label">Fecha del diagnóstico</label><input type="date" id="input-fecha"></div>
+      <p class="hint ui" style="margin-bottom:14px;">Tip: si ya llenaste el árbol de este cliente antes, escribe el mismo nombre y negocio y sus respuestas se recuperan solas — quedan guardadas en este computador, sin internet.</p>
+      <div class="btn-row"><button class="btn" onclick="startTree()">Comenzar diagnóstico →</button></div>
+    </div>
+
+    <div class="card ui" style="margin-top:16px;">
+      <label class="field-label">¿Vienes de otro dispositivo?</label>
+      <p class="hint" style="margin:0 0 12px;">¿Ya tienes el código en WhatsApp? Mantén el dedo presionado sobre el mensaje hasta que aparezca "Copiar", y pégalo aquí abajo.</p>
+      <textarea id="import-textarea" placeholder="Pega aquí el código ARBOL1:..." style="min-height:70px;font-family:monospace;font-size:12px;"></textarea>
+      <div class="btn-row" style="margin-top:12px;"><button class="btn" onclick="importClientCode()">📥 Importar desde código</button></div>
+      <p id="import-status" class="hint" style="margin-top:10px;min-height:16px;"></p>
+    </div>
+  </div>
+
+
+  <!-- SCREEN 2: TREE -->
+  <div class="screen" id="screen-tree">
+    <div class="hero" style="padding-top:6px;">
+      <h1 style="font-size:26px;" id="tree-title">El árbol de tu negocio</h1>
+      <p class="ui" style="font-size:14px;">Toca cada parte del árbol para responder sus preguntas.</p>
+    </div>
+
+    <div class="tree-wrap">
+      <svg viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="soft-shadow" x="-60%" y="-60%" width="220%" height="220%">
+            <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#333365" flood-opacity="0.28"/>
+          </filter>
+          <radialGradient id="canopy-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#36CBCF" stop-opacity="0.16"/>
+            <stop offset="100%" stop-color="#36CBCF" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="grad-raices" cx="35%" cy="32%" r="70%"><stop offset="0%" stop-color="#ab8c62"/><stop offset="100%" stop-color="#8B6F47"/></radialGradient>
+          <radialGradient id="grad-tronco" cx="35%" cy="32%" r="70%"><stop offset="0%" stop-color="#4d4d8a"/><stop offset="100%" stop-color="#333365"/></radialGradient>
+          <radialGradient id="grad-flores" cx="35%" cy="32%" r="70%"><stop offset="0%" stop-color="#b795de"/><stop offset="100%" stop-color="#9B72CF"/></radialGradient>
+          <radialGradient id="grad-ramas" cx="35%" cy="32%" r="70%"><stop offset="0%" stop-color="#72e1e4"/><stop offset="100%" stop-color="#36CBCF"/></radialGradient>
+          <radialGradient id="grad-hojas" cx="35%" cy="32%" r="70%"><stop offset="0%" stop-color="#2fb6b2"/><stop offset="100%" stop-color="#1a8f92"/></radialGradient>
+          <radialGradient id="grad-frutos" cx="35%" cy="32%" r="70%"><stop offset="0%" stop-color="#ffe066"/><stop offset="100%" stop-color="#F7CC01"/></radialGradient>
+        </defs>
+
+        <ellipse cx="200" cy="140" rx="175" ry="115" fill="url(#canopy-glow)"/>
+        <ellipse cx="200" cy="345" rx="115" ry="9" fill="#333365" opacity="0.08"/>
+
+        <g stroke="#333365" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.55">
+          <line x1="200" y1="340" x2="200" y2="200"/>
+          <path d="M200 340 Q160 365 130 395"/>
+          <path d="M200 340 Q180 375 175 405"/>
+          <path d="M200 340 Q220 375 225 405"/>
+          <path d="M200 340 Q240 365 270 395"/>
+          <path d="M200 200 Q150 185 110 175"/>
+          <path d="M200 200 Q250 185 290 175"/>
+          <path d="M200 200 Q170 150 150 95"/>
+          <path d="M200 200 Q230 150 250 95"/>
+        </g>
+        <g id="node-raices" class="node" onclick="openZone('raices')" filter="url(#soft-shadow)">
+          <circle id="circle-raices" cx="200" cy="405" r="24" fill="#F7F4EC" stroke="#8B6F47" stroke-width="2.5"/>
+          <text id="glyph-raices" class="node-glyph" x="200" y="411" text-anchor="middle" fill="#333365">1</text>
+        </g>
+        <text class="node-label" x="200" y="440" text-anchor="middle">RAÍCES</text>
+        <g id="node-tronco" class="node" onclick="openZone('tronco')" filter="url(#soft-shadow)">
+          <circle id="circle-tronco" cx="200" cy="260" r="24" fill="#F7F4EC" stroke="#333365" stroke-width="2.5"/>
+          <text id="glyph-tronco" class="node-glyph" x="200" y="266" text-anchor="middle" fill="#333365">2</text>
+        </g>
+        <text class="node-label" x="252" y="266" text-anchor="start">TRONCO</text>
+        <g id="node-flores" class="node" onclick="openZone('flores')" filter="url(#soft-shadow)">
+          <circle id="circle-flores" cx="290" cy="175" r="24" fill="#F7F4EC" stroke="#9B72CF" stroke-width="2.5"/>
+          <text id="glyph-flores" class="node-glyph" x="290" y="181" text-anchor="middle" fill="#333365">3</text>
+        </g>
+        <text class="node-label" x="290" y="210" text-anchor="middle">FLORES</text>
+        <g id="node-ramas" class="node" onclick="openZone('ramas')" filter="url(#soft-shadow)">
+          <circle id="circle-ramas" cx="110" cy="175" r="24" fill="#F7F4EC" stroke="#36CBCF" stroke-width="2.5"/>
+          <text id="glyph-ramas" class="node-glyph" x="110" y="181" text-anchor="middle" fill="#333365">4</text>
+        </g>
+        <text class="node-label" x="110" y="210" text-anchor="middle">RAMAS</text>
+        <g id="node-hojas" class="node" onclick="openZone('hojas')" filter="url(#soft-shadow)">
+          <circle id="circle-hojas" cx="150" cy="95" r="24" fill="#F7F4EC" stroke="#1a8f92" stroke-width="2.5"/>
+          <text id="glyph-hojas" class="node-glyph" x="150" y="101" text-anchor="middle" fill="#333365">5</text>
+        </g>
+        <text class="node-label" x="150" y="60" text-anchor="middle">HOJAS</text>
+        <g id="node-frutos" class="node" onclick="openZone('frutos')" filter="url(#soft-shadow)">
+          <circle id="circle-frutos" cx="250" cy="95" r="24" fill="#F7F4EC" stroke="#F7CC01" stroke-width="2.5"/>
+          <text id="glyph-frutos" class="node-glyph" x="250" y="101" text-anchor="middle" fill="#333365">6</text>
+        </g>
+        <text class="node-label" x="250" y="60" text-anchor="middle">FRUTOS</text>
+      </svg>
+    </div>
+
+    <div class="word-guide ui">✍️ Guía rápida: 1 a 3 frases por respuesta (máx. ~40 palabras). Resume la idea del emprendedor, no transcribas todo lo que diga.</div>
+
+    <div class="status-row ui" id="status-row"></div>
+    <p class="hint ui" id="hint-text">Empieza por las raíces: ahí está el propósito del negocio.</p>
+
+    <div class="btn-row" style="margin-top:20px;">
+      <button class="btn btn-gold" id="btn-diagnose" disabled onclick="generarDiagnostico()">Generar diagnóstico 🌾</button>
+      <button class="btn" onclick="exportClient()">📤 Exportar este árbol</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn" onclick="showScreen('screen-start')">← Volver a datos del cliente (editar nombre, WhatsApp, correo...)</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: DIAGNOSIS -->
+  <div class="screen ui" id="screen-diag">
+    <div class="diag-header">
+      <h1>🌾 Diagnóstico del árbol</h1>
+      <p id="diag-sub" style="color:#8a8470;"></p>
+      <p id="diag-contact" style="color:#8a8470;font-size:13px;"></p>
+    </div>
+    <div id="diag-content"></div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="showReportScreen()">📄 Informe para el cliente</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn" onclick="showScreen('screen-tree')">← Volver al árbol (ajustar respuestas)</button>
+      <button class="btn" onclick="exportClient()">📤 Exportar este árbol</button>
+      <button class="btn btn-gold" onclick="resetAll()">Nuevo diagnóstico (otro cliente)</button>
+    </div>
+    <div class="footer-brand">
+      <b>CreaterLab · Laboratorio de Ideas</b><br>
+      Asesoría empresarial y consultoría organizacional · Chigorodó, Antioquia<br>
+      WhatsApp 321 577 9459 · createrlab7@gmail.com
+    </div>
+  </div>
+
+  <!-- SCREEN 4: CLIENT-FACING REPORT -->
+  <div class="screen ui" id="screen-report">
+    <div class="hero" style="padding-top:6px;">
+      <h1 style="font-size:24px;">📄 Informe para el cliente</h1>
+      <p style="font-size:14px;">Esta es la versión que le vas a enviar. Puedes descargarla como imagen o compartirla directo.</p>
+    </div>
+
+    <div id="report-card-wrap" style="display:flex;justify-content:center;">
+      <div id="report-card" style="width:100%;max-width:480px;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 4px 30px rgba(51,51,101,0.12);">
+        <div style="background:#F7F4EC;padding:22px 26px 16px;text-align:center;">
+          <img src="data:image/jpeg;base64,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Ka52/wAqhqwduHdwcHM4dj8Xt4ua3RE72W2d8DBDFk0qz696sWTPNV8vtNxlsAlNrtdkonwU8ckjeF0j3PcXOO23L0Dw2Mz9yIonUc+YSwERFgSEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREB//2Q==" style="max-width:220px;width:70%;height:auto;display:block;margin:0 auto;">
+        </div>
+        <div style="padding:6px 26px 26px;">
+          <p style="text-align:center;font-family:'Georgia',serif;font-size:12px;letter-spacing:0.15em;text-transform:uppercase;color:#8a8470;margin:0 0 4px;">Diagnóstico Empresarial · El Árbol del Emprendedor</p>
+          <h2 id="report-negocio" style="text-align:center;font-family:'Georgia',serif;color:#333365;font-size:24px;margin:0 0 4px;">Negocio</h2>
+          <p id="report-fecha" style="text-align:center;color:#8a8470;font-size:12.5px;margin:0 0 20px;"></p>
+
+          <div style="text-align:center;background:#F7F4EC;border-radius:14px;padding:18px;margin-bottom:18px;">
+            <div id="report-score" style="font-family:'Georgia',serif;font-size:48px;font-weight:700;line-height:1;">-</div>
+            <div id="report-score-label" style="font-size:12px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-top:4px;"></div>
+          </div>
+
+          <p id="report-resumen" contenteditable="true" style="font-size:14.5px;color:#3a3a3a;line-height:1.6;margin:0 0 6px;padding:6px;border-radius:6px;"></p>
+          <p style="font-size:11px;color:#a39d88;margin:0 0 18px;text-align:center;">✏️ Toca cualquier texto de esta tarjeta para editarlo</p>
+
+          <p style="font-family:'Georgia',serif;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#333365;margin:0 0 10px;">Cómo está tu árbol, zona por zona</p>
+          <div id="report-zonas" style="margin-bottom:20px;"></div>
+
+          <div style="background:#333365;color:#fff;border-radius:12px;padding:16px 18px;font-size:13px;line-height:1.6;margin-bottom:18px;">
+            💡 Este diagnóstico tiene un valor de $80.000. Si contratas un plan de consultoría con CreaterLab dentro de los próximos 30 días, te descontamos $100.000 del costo total — los $80.000 que ya pagaste, más un bono adicional de $20.000.
+          </div>
+
+          <div style="text-align:center;font-size:12px;color:#8a8470;border-top:1px solid #d8d0bb;padding-top:14px;">
+            <b style="color:#333365;">CreaterLab · Laboratorio de Ideas</b><br>
+            Asesoría empresarial y consultoría organizacional<br>
+            Chigorodó, Antioquia · WhatsApp 321 577 9459<br>
+            createrlab7@gmail.com
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row" style="margin-top:20px;">
+      <button class="btn btn-gold" onclick="downloadReportImage()">⬇️ Descargar como imagen</button>
+      <button class="btn" id="btn-share" onclick="shareReportImage()" style="display:none;">📤 Compartir</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn" onclick="sendReportWhatsapp()">💬 Abrir WhatsApp con mensaje</button>
+      <button class="btn" onclick="sendReportEmail()">📧 Abrir Gmail con mensaje</button>
+    </div>
+    <p class="hint" style="max-width:480px;margin:14px auto 0;">Tip: descarga primero la imagen, y luego adjúntala en WhatsApp o el correo que se abra — así el cliente recibe el diseño completo con tu logo.</p>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn" onclick="showScreen('screen-diag')">← Volver al diagnóstico</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="panel ui">
+    <div class="panel-eyebrow" id="panel-eyebrow">RAÍCES</div>
+    <h2 id="panel-title">Propósito</h2>
+    <p class="sub" id="panel-sub">4 preguntas</p>
+    <div class="panel-guide">Resume en 1 a 3 frases (máx. ~40 palabras). La esencia de lo que dice el emprendedor es suficiente.</div>
+    <div id="panel-questions"></div>
+    <div class="panel-actions">
+      <button class="link-btn" onclick="closePanel()">Cerrar sin guardar</button>
+      <button class="btn" onclick="saveZone()">Guardar respuestas</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ZONES = {
+  raices:{label:"Raíces",eyebrow:"RAÍCES · misión, visión y valores",color:"#8B6F47",
+    questions:["¿Cuál es la misión de tu negocio? ¿Para qué existe día a día?",
+      "¿Cómo te gustaría que fuera tu negocio en 3 a 5 años (tu visión)?",
+      "¿Qué valores no estás dispuesto a negociar en tu negocio?",
+      "¿Cómo describirías tu marca y tu posición actual en el mercado, en pocas palabras?"]},
+  tronco:{label:"Tronco",eyebrow:"TRONCO · mercado y competencia",color:"#333365",
+    questions:["¿Quién es tu cliente ideal y qué necesita realmente?",
+      "¿Qué tendencias de tu mercado podrían afectarte, a favor o en contra?",
+      "¿Quiénes son tus principales competidores y qué hacen mejor o peor que tú?",
+      "¿Cómo te estás posicionando frente a ellos hoy?"]},
+  flores:{label:"Flores",eyebrow:"FLORES · análisis FLOR",color:"#9B72CF",
+    questions:["¿Cuáles son las 2 o 3 fortalezas más grandes de tu negocio?",
+      "¿Cuáles son tus principales limitantes hoy (internas)?",
+      "¿Qué oportunidades ves en el entorno que podrías aprovechar?",
+      "¿Cuáles son los retos más grandes que tienes por delante?"]},
+  ramas:{label:"Ramas",eyebrow:"RAMAS · estrategia y mezcla de mercadeo",color:"#36CBCF",
+    questions:["¿Qué te hace diferente frente a otras opciones del mercado (tu valor diferencial)?",
+      "¿Cómo defines tu política de precios, descuentos y condiciones?",
+      "¿Cómo distribuyes o entregas tu producto o servicio hoy?",
+      "¿Cómo promocionas tu negocio actualmente?"]},
+  hojas:{label:"Hojas",eyebrow:"HOJAS · plan de acción y organización",color:"#1a8f92",
+    questions:["¿Quién hace qué en tu negocio? ¿Está claro o todo depende de ti?",
+      "¿Qué acciones concretas tienes planeadas para los próximos meses?",
+      "¿Tienes un plan de contingencia? ¿Qué harías si algo saliera mal?",
+      "¿Cómo controlas o mides si las cosas van bien?"]},
+  frutos:{label:"Frutos",eyebrow:"FRUTOS · estimaciones económicas",color:"#b89400",
+    questions:["¿Cuánto necesitas vender al mes para cubrir tus costos (punto de equilibrio)?",
+      "¿Cuáles son tus objetivos económicos a corto, mediano y largo plazo?",
+      "¿Qué resultados esperas ver en los próximos 6 a 12 meses?",
+      "¿Cómo sabrás que este plan funcionó?"]}
+};
+const ORDER = ["raices","tronco","flores","ramas","hojas","frutos"];
+const NODE_FILL = {raices:"#8B6F47",tronco:"#333365",flores:"#9B72CF",ramas:"#36CBCF",hojas:"#1a8f92",frutos:"#F7CC01"};
+const NODE_TEXT = {raices:"#fff",tronco:"#fff",flores:"#fff",ramas:"#333365",hojas:"#fff",frutos:"#333365"};
+
+let answers = {};
+let currentZone = null;
+let clientInfo = {nombre:"",negocio:"",whatsapp:"",email:"",direccion:"",fecha:""};
+let clientSlug = null;
+let lastDiagnostico = null;
+
+function slugify(nombre,negocio){
+  return (nombre+"-"+negocio).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
+}
+function storageKey(slug){ return "arbol_cliente_"+slug; }
+
+function saveClientToStorage(){
+  if(!clientSlug) return;
+  try{
+    localStorage.setItem(storageKey(clientSlug), JSON.stringify({info:clientInfo,answers:answers,diagnostico:lastDiagnostico,updatedAt:new Date().toISOString()}));
+  }catch(e){ console.error("No se pudo guardar el respaldo local:", e); }
+}
+function loadClientFromStorage(slug){
+  try{
+    const raw = localStorage.getItem(storageKey(slug));
+    if(raw) return JSON.parse(raw);
+  }catch(e){ console.error(e); }
+  return null;
+}
+
+function setNodeState(zone, done){
+  const circle = document.getElementById('circle-'+zone);
+  const glyph = document.getElementById('glyph-'+zone);
+  if(done){
+    circle.setAttribute('fill', 'url(#grad-'+zone+')');
+    circle.setAttribute('stroke', NODE_FILL[zone]);
+    glyph.setAttribute('fill', NODE_TEXT[zone]);
+    glyph.textContent = "✓";
+  } else {
+    circle.setAttribute('fill', '#F7F4EC');
+    circle.setAttribute('stroke', ZONES[zone].color === '#b89400' ? '#F7CC01' : ZONES[zone].color);
+    glyph.setAttribute('fill', '#333365');
+    glyph.textContent = String(ORDER.indexOf(zone)+1);
+  }
+}
+
+function startTree(){
+  const nombre = document.getElementById('input-nombre').value.trim() || "Emprendedor(a)";
+  const negocio = document.getElementById('input-negocio').value.trim() || "tu negocio";
+  clientInfo = {
+    nombre, negocio,
+    whatsapp: document.getElementById('input-whatsapp').value.trim(),
+    email: document.getElementById('input-email').value.trim(),
+    direccion: document.getElementById('input-direccion').value.trim(),
+    fecha: document.getElementById('input-fecha').value.trim() || new Date().toISOString().slice(0,10)
+  };
+  clientSlug = slugify(nombre, negocio);
+
+  const existing = loadClientFromStorage(clientSlug);
+  if(existing && existing.answers){
+    answers = existing.answers;
+    // Los datos que acabas de escribir en el formulario mandan sobre los guardados antes
+    // (por si veniste a corregir el WhatsApp, el correo, etc.)
+    if(existing.info) clientInfo = Object.assign({}, existing.info, clientInfo);
+    lastDiagnostico = existing.diagnostico || null;
+  } else {
+    answers = {};
+    lastDiagnostico = null;
+  }
+  ORDER.forEach(z => setNodeState(z, !!answers[z]));
+
+  document.getElementById('tree-title').textContent = "El árbol de " + clientInfo.negocio;
+  showScreen('screen-tree');
+  renderStatus();
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function wordCount(str){ return str.trim().length ? str.trim().split(/\s+/).length : 0; }
+
+function openZone(zone){
+  currentZone = zone;
+  const z = ZONES[zone];
+  document.getElementById('panel-eyebrow').textContent = z.eyebrow;
+  document.getElementById('panel-eyebrow').style.color = NODE_FILL[zone];
+  document.getElementById('panel-title').textContent = z.label;
+  document.getElementById('panel-sub').textContent = z.questions.length + " preguntas";
+  const qWrap = document.getElementById('panel-questions');
+  qWrap.innerHTML = "";
+  const saved = answers[zone] || [];
+  z.questions.forEach((q,i)=>{
+    const div = document.createElement('div');
+    div.className='q';
+    div.innerHTML = `<label>${i+1}. ${q}</label><textarea id="q-${zone}-${i}" placeholder="Escribe la respuesta del emprendedor...">${saved[i]||""}</textarea><div class="wc" id="wc-${zone}-${i}">0 palabras</div>`;
+    qWrap.appendChild(div);
+  });
+  z.questions.forEach((q,i)=>{
+    const ta = document.getElementById(`q-${zone}-${i}`);
+    const wc = document.getElementById(`wc-${zone}-${i}`);
+    const update = ()=>{
+      const n = wordCount(ta.value);
+      wc.textContent = n + " palabras";
+      wc.classList.toggle('over', n>40);
+    };
+    ta.addEventListener('input', update);
+    update();
+  });
+  document.getElementById('overlay').classList.add('open');
+}
+
+function closePanel(){ document.getElementById('overlay').classList.remove('open'); }
+
+function saveZone(){
+  const z = ZONES[currentZone];
+  const vals = z.questions.map((_,i)=>document.getElementById(`q-${currentZone}-${i}`).value.trim());
+  answers[currentZone] = vals;
+  setNodeState(currentZone, true);
+  closePanel();
+  renderStatus();
+  saveClientToStorage();
+}
+
+function renderStatus(){
+  const row = document.getElementById('status-row');
+  row.innerHTML = "";
+  let doneCount = 0;
+  ORDER.forEach(z=>{
+    const isDone = !!answers[z];
+    if(isDone) doneCount++;
+    const chip = document.createElement('div');
+    chip.className='status-chip';
+    chip.innerHTML = `<span class="dot ${isDone?'done':''}"></span>${ZONES[z].label}`;
+    row.appendChild(chip);
+  });
+  const total = ORDER.length;
+  document.getElementById('btn-diagnose').disabled = doneCount < total;
+  const hint = document.getElementById('hint-text');
+  if(doneCount===0) hint.textContent = "Empieza por las raíces: ahí está el propósito del negocio. Tus respuestas se guardan solas en este computador.";
+  else if(doneCount<total) hint.textContent = `Llevas ${doneCount} de ${total} partes. Tus respuestas ya están guardadas.`;
+  else hint.textContent = "¡Árbol completo! Ya puedes generar el diagnóstico.";
+}
+
+// ---- Diagnóstico local, sin internet — con señales de alerta específicas ----
+const TITLES = {
+  raices:"🌱 Raíces · Misión, visión y valores", tronco:"🪵 Tronco · Mercado y competencia",
+  flores:"🌸 Flores · Análisis FLOR", ramas:"🌿 Ramas · Estrategia y mezcla de mercadeo",
+  hojas:"🍃 Hojas · Plan de acción", frutos:"🍎 Frutos · Estimaciones económicas"
+};
+
+const CHANNEL_RX = /whatsapp|instagram|facebook|tiktok|tienda|redes sociales|voz a voz|feria|punto de venta|domicilio|p[aá]gina web|marketplace|almacén|local/i;
+const NUM_RX = /\d|\$|cop|peso/i;
+const SOLOYO_RX = /solo yo|solo yo mismo|todo lo hago yo|nadie m[aá]s|todo depende de m[ií]|yo hago de todo/i;
+const EQUIPO_RX = /equipo|empleado|colaborador|ayudante|socio|persona que me ayuda|contrato/i;
+
+const ZONE_TEXT = {
+  raices:{
+    critico:"Tu negocio no tiene un propósito definido ni valores claros. Sin esa base, cualquier decisión que tomes será reactiva, no estratégica — con el tiempo eso se traduce en una marca que no logra fidelizar ni diferenciarse de nadie.",
+    riesgo:"Tienes una idea de para qué existe tu negocio, pero no está aterrizada del todo. Mientras no la definas con precisión, te va a costar comunicarla de forma consistente a tus clientes y a tu equipo.",
+    solido:"Tu misión y tus valores están claros y definidos. Esa raíz sólida te da una ventaja real: puedes construir toda tu estrategia de marca sobre una base coherente.",
+    rec:{critico:"Define tu misión y tus 3 valores no negociables esta misma semana — sin eso, cualquier estrategia que construyamos después no tendrá base.",
+         riesgo:"Aterriza tu misión en una sola frase clara y compártela con tu equipo.",
+         solido:"Usa tu misión y tus valores como argumento central en tu comunicación de marca."}
+  },
+  tronco:{
+    critico:"No conoces a tu competencia ni tienes claro quién es tu cliente ideal. Estás operando sin mapa: cualquier decisión de precio, promoción o producto que tomes hoy tiene altas probabilidades de estar desalineada con lo que el mercado realmente necesita.",
+    riesgo:"Tienes una idea general de tu mercado, pero te falta profundidad sobre tu competencia y tu cliente ideal. Esa falta de precisión te puede estar costando oportunidades que ni siquiera estás viendo.",
+    solido:"Tienes un conocimiento sólido de tu mercado y tu competencia. Puedes tomar decisiones de posicionamiento con información real, no con suposiciones.",
+    rec:{critico:"Identifica ya a tus 3 competidores más cercanos y a tu cliente ideal — sin esto, cualquier inversión en marketing es un tiro al aire.",
+         riesgo:"Profundiza en el perfil de tu cliente ideal y en qué hace diferente a tu competencia.",
+         solido:"Usa tu conocimiento del mercado para afinar tu posicionamiento frente a la competencia."}
+  },
+  flores:{
+    critico:"No tienes identificadas tus fortalezas ni tus retos reales. Sin ese autodiagnóstico, es prácticamente imposible priorizar en qué invertir tu tiempo y tu dinero — vas a seguir apagando incendios en lugar de crecer con intención.",
+    riesgo:"Tienes una idea parcial de tus fortalezas y tus retos, pero no está del todo desarrollada. Profundizar aquí te va a ahorrar meses de ensayo y error.",
+    solido:"Tienes un autoconocimiento real de tu negocio: identificas tus fortalezas y tus retos con claridad. Esa lucidez es un activo que muchos negocios no tienen.",
+    rec:{critico:"Dedica una sesión completa a mapear fortalezas, limitantes, oportunidades y retos — es la base de cualquier plan que hagamos después.",
+         riesgo:"Profundiza en tus retos reales, no solo en tus fortalezas evidentes.",
+         solido:"Usa tus fortalezas identificadas como eje de tu propuesta de valor."}
+  },
+  ramas:{
+    critico:"No tienes precios definidos ni un canal de venta activo. Esto es grave: estás dejando que el mercado decida por ti cuánto cobras y cómo te encuentran — es la receta directa para ganar cada vez menos por el mismo esfuerzo.",
+    riesgo:"Tienes precio o canal, pero no ambos bien definidos. Mientras falte una de las dos piezas, tu estrategia comercial va a rendir muy por debajo de su potencial.",
+    solido:"Tienes precios definidos y un canal de venta activo. Esa combinación es la base real de una estrategia comercial que puede escalar.",
+    rec:{critico:"Define un precio fijo y activa un canal de venta concreto esta semana — sin esto no hay estrategia comercial posible.",
+         riesgo:"Completa la pieza que te falta (el precio o el canal) antes de invertir en promoción.",
+         solido:"Sigue optimizando el canal y el precio que mejor te están funcionando."}
+  },
+  hojas:{
+    critico:"Todo el negocio depende de ti y no tienes un plan de contingencia. Este es un riesgo estructural: si te enfermas, te ausentas o simplemente te agotas, el negocio se detiene por completo contigo.",
+    riesgo:"Tienes cierta organización, pero sigue habiendo demasiado que solo tú puedes hacer, y no tienes un plan claro para cuando algo salga mal.",
+    solido:"Tu organización interna es clara y tienes un plan de contingencia pensado. Eso te da resiliencia real frente a imprevistos.",
+    rec:{critico:"Diseña, aunque sea en una hoja, un plan de contingencia y delega una sola tarea este mes — tu negocio no puede depender al 100% de ti.",
+         riesgo:"Documenta tus procesos actuales y define un plan mínimo de contingencia.",
+         solido:"Sigue fortaleciendo tu organización para poder delegar más a medida que creces."}
+  },
+  frutos:{
+    critico:"Tu negocio está operando sin ningún control numérico: no tienes claro tu punto de equilibrio ni metas de ingreso a 6-12 meses. Esto no es un detalle menor — es cuestión de tiempo para que los gastos superen lo que entra, y el negocio empiece a perder dinero sin que te des cuenta a tiempo. Si esto no se corrige, el riesgo real es llegar a un punto de déficit sostenido que obligue a cerrar.",
+    riesgo:"Tienes alguna idea de hacia dónde quieres llevar tu negocio, pero no la has convertido en cifras concretas. Mientras no pongas un número exacto a tus metas de ingreso y a tu punto de equilibrio, vas a seguir tomando decisiones a medias — no es suficiente para sostener el crecimiento a mediano plazo.",
+    solido:"Tienes claridad numérica real: conoces tu punto de equilibrio y tus metas de ingreso. Esa es la base para tomar decisiones financieras informadas y crecer con control.",
+    rec:{critico:"Calcula tu punto de equilibrio y define una meta de ingresos a 6 y 12 meses esta semana — es urgente, sin esto no puedes saber si tu negocio va en la dirección correcta.",
+         riesgo:"Pon una cifra exacta a tu meta de ingresos a 6-12 meses, no solo una intención.",
+         solido:"Usa tu punto de equilibrio y tus metas como referencia mensual para decidir gastos e inversión."}
+  }
+};
+
+// checks[zone] = función(vals) -> número de señales concretas cumplidas (0,1 o 2), sobre 2 posibles
+const SPECIFIC_CHECKS = {
+  raices: vals => ( (vals[0]||"").trim().length>=15 ? 1:0 ) + ( ((vals[2]||"").trim().length>=15 || (vals[3]||"").trim().length>=15) ? 1:0 ),
+  tronco: vals => ( (vals[2]||"").trim().length>=10 ? 1:0 ) + ( (vals[0]||"").trim().length>=15 ? 1:0 ),
+  flores: vals => ( (vals[0]||"").trim().length>=15 ? 1:0 ) + ( (vals[3]||"").trim().length>=15 ? 1:0 ),
+  ramas: vals => ( NUM_RX.test(vals[1]||"") ? 1:0 ) + ( CHANNEL_RX.test((vals[2]||"")+" "+(vals[3]||"")+" "+(vals[0]||"")) ? 1:0 ),
+  hojas: vals => ( (!SOLOYO_RX.test(vals[0]||"") && EQUIPO_RX.test(vals[0]||"")) ? 1:0 ) + ( (vals[2]||"").trim().length>=15 ? 1:0 ),
+  frutos: vals => ( NUM_RX.test(vals[0]||"") ? 1:0 ) + ( (NUM_RX.test(vals[1]||"") || NUM_RX.test(vals[2]||"")) ? 1:0 )
+};
+
+function zoneDiagnostico(zone, vals){
+  vals = vals || ["","","",""];
+  const filled = vals.filter(v=>v && v.trim().length>0).length;
+  const firstAnswer = vals.find(v=>v && v.trim().length>0) || "";
+  const quote = firstAnswer ? ` Mencionaste: "${firstAnswer.slice(0,90)}${firstAnswer.length>90?'…':''}"` : "";
+
+  const specifics = SPECIFIC_CHECKS[zone](vals); // 0,1,2
+  // puntaje 1-10: mitad por completitud (llenaste las 4), mitad por concreción (cifras/datos reales)
+  const score = Math.max(1, Math.min(10, Math.round((filled/4)*5 + (specifics/2)*5)));
+  const band = score<=4 ? "critico" : (score<=7 ? "riesgo" : "solido");
+
+  const t = ZONE_TEXT[zone];
+  const diagnostico = t[band] + quote;
+  const recomendacion = t.rec[band];
+
+  return { diagnostico, recomendacion, score, band };
+}
+
+function computeDiagnostico(){
+  const result = {};
+  const scores = {};
+  ORDER.forEach(z=>{
+    const d = zoneDiagnostico(z, answers[z]);
+    result[z] = { diagnostico: d.diagnostico, recomendacion: d.recomendacion, score: d.score, band: d.band };
+    scores[z] = d.score;
+  });
+
+  let weakest = ORDER[0], strongest = ORDER[0];
+  ORDER.forEach(z=>{
+    if(scores[z] < scores[weakest]) weakest = z;
+    if(scores[z] > scores[strongest]) strongest = z;
+  });
+  const weakLabel = ZONES[weakest].label;
+  const strongLabel = ZONES[strongest].label;
+
+  const overall = Math.round(ORDER.reduce((s,z)=>s+scores[z],0) / ORDER.length);
+  const overallBand = overall<=4 ? "Crítico" : (overall<=7 ? "En riesgo — necesita atención" : "Sólido");
+
+  result.puntaje_general = overall;
+  result.nivel_general = overallBand;
+  result.resumen_general = `El árbol de ${clientInfo.negocio} obtiene ${overall}/10. Su mayor fortaleza está en ${strongLabel} y su reto más urgente está en ${weakLabel}. ${overall<=7 ? "Todavía hay brechas reales que, si no se atienden, van a limitar el crecimiento del negocio." : "Tiene una base sólida sobre la cual seguir construyendo."}`;
+  result.siguiente_paso = `Trabajar en ${weakLabel} durante las próximas dos semanas es el paso más urgente para fortalecer el negocio. Este diagnóstico ya muestra las grietas reales — es exactamente el tipo de trabajo que se resuelve en una consultoría con CreaterLab.`;
+  return result;
+}
+
+
+function generarDiagnostico(){
+  showScreen('screen-diag');
+  document.getElementById('diag-sub').textContent = `${clientInfo.nombre} · ${clientInfo.negocio}`;
+  const bits = [clientInfo.whatsapp, clientInfo.email, clientInfo.direccion, clientInfo.fecha].filter(Boolean);
+  document.getElementById('diag-contact').textContent = bits.join(" · ");
+
+  const result = computeDiagnostico();
+  lastDiagnostico = result;
+  renderDiagnostico(result);
+  saveClientToStorage();
+}
+
+function scoreColor(score){
+  if(score<=4) return "#c0392b";
+  if(score<=7) return "#c98a1e";
+  return "#1a8f92";
+}
+
+function renderDiagnostico(r){
+  const sc = r.puntaje_general!=null ? r.puntaje_general : "-";
+  const scColor = scoreColor(r.puntaje_general||0);
+  let html = `
+    <div class="score-banner">
+      <div class="score-number" style="color:${scColor};">${sc}<span style="font-size:20px;">/10</span></div>
+      <div class="score-label" style="color:${scColor};">${r.nivel_general||""}</div>
+    </div>
+    <div class="diag-section gold"><h3>Resumen general</h3><p>${r.resumen_general||""}</p></div>`;
+  ORDER.forEach(key=>{
+    const d = r[key] || {};
+    const cls = key==="flores" ? "diag-section bloom" : "diag-section";
+    const dotColor = scoreColor(d.score||0);
+    html += `<div class="${cls}"><h3>${TITLES[key]} <span style="float:right;color:${dotColor};font-size:15px;">${d.score!=null?d.score:''}/10</span></h3><p>${d.diagnostico||""}</p><p class="rec">→ ${d.recomendacion||""}</p></div>`;
+  });
+  html += `<div class="diag-section gold"><h3>🎯 Siguiente paso (2 semanas)</h3><p>${r.siguiente_paso||""}</p></div>`;
+  document.getElementById('diag-content').innerHTML = html;
+}
+
+function exportClient(){
+  if(!clientSlug){ alert("Primero comienza o carga un árbol para poder exportarlo."); return; }
+  // No incluimos el diagnóstico ya redactado: se vuelve a calcular solo al importar, así el código pesa mucho menos.
+  const data = { info: clientInfo, answers: answers };
+  const code = "ARBOL1:" + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  document.getElementById('export-textarea').value = code;
+  document.getElementById('export-overlay').classList.add('open');
+}
+
+function copyExportCode(){
+  const ta = document.getElementById('export-textarea');
+  ta.select();
+  ta.setSelectionRange(0, 999999);
+  try{
+    navigator.clipboard.writeText(ta.value).then(()=>{
+      document.getElementById('copy-feedback').textContent = "¡Copiado! Ya puedes pegarlo en WhatsApp.";
+    }).catch(()=>{ document.execCommand('copy'); document.getElementById('copy-feedback').textContent = "¡Copiado!"; });
+  }catch(e){
+    document.execCommand('copy');
+    document.getElementById('copy-feedback').textContent = "¡Copiado!";
+  }
+}
+
+function closeExportOverlay(){ document.getElementById('export-overlay').classList.remove('open'); }
+
+function importClientCode(){
+  const statusEl = document.getElementById('import-status');
+  statusEl.textContent = "";
+  statusEl.style.color = "#5c5748";
+  let raw = document.getElementById('import-textarea').value.trim();
+  if(!raw){ statusEl.textContent = "Pega primero el código que recibiste."; statusEl.style.color = "#c0392b"; return; }
+  try{
+    raw = raw.replace(/\s+/g, ""); // quita espacios y saltos de línea que a veces se cuelan al copiar
+    const b64 = raw.indexOf("ARBOL1:")===0 ? raw.slice(7) : raw;
+    const json = decodeURIComponent(escape(atob(b64)));
+    const data = JSON.parse(json);
+    if(!data.info || !data.answers) throw new Error("El código no tiene el formato esperado (¿copiaste el código completo?).");
+
+    clientInfo = Object.assign({nombre:"",negocio:"",whatsapp:"",email:"",direccion:"",fecha:""}, data.info);
+    answers = data.answers;
+    clientSlug = slugify(clientInfo.nombre, clientInfo.negocio);
+    const todasLlenas = ORDER.every(z => !!answers[z]);
+    lastDiagnostico = todasLlenas ? computeDiagnostico() : null;
+    saveClientToStorage();
+
+    document.getElementById('input-nombre').value = clientInfo.nombre;
+    document.getElementById('input-negocio').value = clientInfo.negocio;
+    document.getElementById('input-whatsapp').value = clientInfo.whatsapp;
+    document.getElementById('input-email').value = clientInfo.email;
+    document.getElementById('input-direccion').value = clientInfo.direccion;
+    document.getElementById('input-fecha').value = clientInfo.fecha;
+
+    ORDER.forEach(z => setNodeState(z, !!answers[z]));
+    document.getElementById('tree-title').textContent = "El árbol de " + clientInfo.negocio;
+    document.getElementById('import-textarea').value = "";
+    statusEl.textContent = "";
+    renderClientsList();
+    showScreen('screen-tree');
+    renderStatus();
+  }catch(err){
+    statusEl.style.color = "#c0392b";
+    statusEl.textContent = "No se pudo importar: " + err.message + " — revisa que hayas copiado el código completo, desde la primera hasta la última letra.";
+    console.error(err);
+  }
+}
+
+// ---- Informe para el cliente ----
+function showReportScreen(){
+  if(!lastDiagnostico){ alert("Primero genera el diagnóstico."); return; }
+  const r = lastDiagnostico;
+  document.getElementById('report-negocio').textContent = clientInfo.negocio || "tu negocio";
+  document.getElementById('report-fecha').textContent = (clientInfo.fecha || "") + (clientInfo.nombre ? " · " + clientInfo.nombre : "");
+
+  const sc = r.puntaje_general!=null ? r.puntaje_general : "-";
+  const col = scoreColor(r.puntaje_general||0);
+  const scoreEl = document.getElementById('report-score');
+  scoreEl.textContent = sc + "/10";
+  scoreEl.style.color = col;
+  document.getElementById('report-score-label').textContent = r.nivel_general || "";
+  document.getElementById('report-score-label').style.color = col;
+
+  document.getElementById('report-resumen').textContent = r.resumen_general || "";
+
+  const zonasHtml = ORDER.map(z=>{
+    const d = r[z] || {};
+    const col2 = scoreColor(d.score||0);
+    const titulo = (TITLES[z]||"").split(" · ")[0];
+    return `<div style="margin-bottom:14px;border-left:3px solid ${col2};padding-left:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+        <b style="color:#333365;font-family:'Georgia',serif;font-size:14.5px;">${titulo}</b>
+        <span style="color:${col2};font-size:12.5px;font-weight:700;">${d.score!=null?d.score:''}/10</span>
+      </div>
+      <div contenteditable="true" style="font-size:13.5px;color:#3a3a3a;line-height:1.55;padding:3px;border-radius:6px;">${(d.diagnostico||"").split(" Mencionaste:")[0]} <b>→ ${d.recomendacion||""}</b></div>
+    </div>`;
+  }).join("");
+  document.getElementById('report-zonas').innerHTML = zonasHtml;
+
+  showScreen('screen-report');
+  if(navigator.share){ document.getElementById('btn-share').style.display = 'inline-block'; }
+}
+
+function renderReportToCanvas(callback){
+  if(typeof html2canvas === "undefined"){
+    alert("Para generar la imagen necesitas tener internet en este momento (el diagnóstico en sí no lo necesita, solo esta exportación). Revisa tu conexión e intenta de nuevo, o toma una captura de pantalla de esta tarjeta como alternativa.");
+    return;
+  }
+  const card = document.getElementById('report-card');
+  html2canvas(card, {backgroundColor:"#ffffff", scale:2, useCORS:true}).then(function(canvas){
+    canvas.toBlob(function(blob){ callback(blob); }, "image/png");
+  }).catch(function(err){
+    console.error(err);
+    alert("No se pudo generar la imagen. Intenta de nuevo, o toma una captura de pantalla de esta tarjeta como alternativa.");
+  });
+}
+
+function downloadReportImage(){
+  renderReportToCanvas(function(blob){
+    if(!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = "informe-" + (clientSlug||"cliente") + ".png";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 2000);
+  });
+}
+
+function shareReportImage(){
+  renderReportToCanvas(function(blob){
+    if(!blob) return;
+    const file = new File([blob], "informe-"+(clientSlug||"cliente")+".png", {type:"image/png"});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({
+        files:[file],
+        title: "Diagnóstico de " + clientInfo.negocio,
+        text: "Aquí está el diagnóstico de tu negocio, hecho con El Árbol del Emprendedor de CreaterLab."
+      }).catch(()=>{});
+    } else {
+      downloadReportImage();
+    }
+  });
+}
+
+function reportShareText(){
+  const r = lastDiagnostico || {};
+  return `Hola ${clientInfo.nombre||""}, aquí está el diagnóstico de ${clientInfo.negocio||"tu negocio"} hecho con El Árbol del Emprendedor de CreaterLab.\n\nPuntaje general: ${r.puntaje_general||"-"}/10 (${r.nivel_general||""})\n\n${r.resumen_general||""}\n\nTe adjunto la imagen del informe completo. Si quieres profundizar y trabajar en esto conmigo, contratando un plan de consultoría dentro de los próximos 30 días te descuento $100.000 del costo total (los $80.000 de este diagnóstico, más un bono adicional de $20.000).\n\nCreaterLab · Laboratorio de Ideas\nWhatsApp 321 577 9459 · createrlab7@gmail.com`;
+}
+
+function sendReportWhatsapp(){
+  const text = encodeURIComponent(reportShareText());
+  window.open("https://wa.me/?text=" + text, "_blank");
+}
+
+function sendReportEmail(){
+  const subject = encodeURIComponent("Diagnóstico de " + (clientInfo.negocio||"tu negocio") + " · CreaterLab");
+  const body = encodeURIComponent(reportShareText());
+  const to = encodeURIComponent(clientInfo.email||"");
+  window.open("https://mail.google.com/mail/?view=cm&fs=1&to=" + to + "&su=" + subject + "&body=" + body, "_blank");
+}
+
+// ---- Base de clientes guardados en este dispositivo ----
+function listSavedClients(){
+  const clients = [];
+  for(let i=0;i<localStorage.length;i++){
+    const key = localStorage.key(i);
+    if(key && key.indexOf("arbol_cliente_")===0){
+      try{
+        const data = JSON.parse(localStorage.getItem(key));
+        clients.push({
+          slug: key.slice("arbol_cliente_".length),
+          info: data.info || {},
+          diagnostico: data.diagnostico || null,
+          updatedAt: data.updatedAt || ""
+        });
+      }catch(e){ /* entrada dañada, se ignora */ }
+    }
+  }
+  clients.sort((a,b)=> (b.updatedAt||"").localeCompare(a.updatedAt||""));
+  return clients;
+}
+
+function renderClientsList(){
+  const card = document.getElementById('clients-card');
+  const wrap = document.getElementById('clients-list');
+  const clients = listSavedClients();
+  if(clients.length===0){
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = 'block';
+  wrap.innerHTML = clients.map(c=>{
+    const hasDx = !!c.diagnostico;
+    const score = hasDx && c.diagnostico.puntaje_general!=null ? c.diagnostico.puntaje_general+"/10" : "Sin diagnóstico";
+    const col = hasDx ? scoreColor(c.diagnostico.puntaje_general||0) : "#a39d88";
+    const negocio = (c.info.negocio || "(sin nombre)").replace(/</g,"&lt;");
+    const nombre = (c.info.nombre || "").replace(/</g,"&lt;");
+    const fecha = c.info.fecha || "";
+    return `<div class="client-row">
+      <div class="client-row-clickable" onclick="openSavedClient('${c.slug}')" style="flex:1;min-width:0;display:flex;justify-content:space-between;align-items:center;gap:10px;">
+        <div class="client-row-main">
+          <b>${negocio}</b>
+          <div class="client-row-sub">${nombre}${fecha ? " · "+fecha : ""}</div>
+        </div>
+        <div class="client-row-score" style="color:${col};">${score}</div>
+      </div>
+      <button class="client-delete-btn" onclick="event.stopPropagation(); deleteSavedClient('${c.slug}', '${negocio.replace(/'/g,"\\'")}')" title="Eliminar este cliente">✕</button>
+    </div>`;
+  }).join("");
+}
+
+function deleteSavedClient(slug, negocioLabel){
+  const ok = confirm(`¿Eliminar el cliente "${negocioLabel}" de este dispositivo? Esta acción no se puede deshacer.`);
+  if(!ok) return;
+  try{
+    localStorage.removeItem("arbol_cliente_"+slug);
+  }catch(e){ console.error(e); }
+  renderClientsList();
+}
+
+function openSavedClient(slug){
+  const raw = localStorage.getItem("arbol_cliente_"+slug);
+  if(!raw){ alert("No se encontró este cliente."); return; }
+  try{
+    const data = JSON.parse(raw);
+    clientInfo = Object.assign({nombre:"",negocio:"",whatsapp:"",email:"",direccion:"",fecha:""}, data.info||{});
+    answers = data.answers || {};
+    lastDiagnostico = data.diagnostico || null;
+    clientSlug = slug;
+
+    document.getElementById('input-nombre').value = clientInfo.nombre;
+    document.getElementById('input-negocio').value = clientInfo.negocio;
+    document.getElementById('input-whatsapp').value = clientInfo.whatsapp;
+    document.getElementById('input-email').value = clientInfo.email;
+    document.getElementById('input-direccion').value = clientInfo.direccion;
+    document.getElementById('input-fecha').value = clientInfo.fecha;
+    ORDER.forEach(z => setNodeState(z, !!answers[z]));
+    document.getElementById('tree-title').textContent = "El árbol de " + clientInfo.negocio;
+
+    if(lastDiagnostico){
+      showScreen('screen-diag');
+      document.getElementById('diag-sub').textContent = `${clientInfo.nombre} · ${clientInfo.negocio}`;
+      const bits = [clientInfo.whatsapp, clientInfo.email, clientInfo.direccion, clientInfo.fecha].filter(Boolean);
+      document.getElementById('diag-contact').textContent = bits.join(" · ");
+      renderDiagnostico(lastDiagnostico);
+    } else {
+      showScreen('screen-tree');
+      renderStatus();
+    }
+  }catch(err){
+    alert("No se pudo abrir este cliente: " + err.message);
+  }
+}
+
+function resetAll(){
+  answers = {};
+  clientInfo = {nombre:"",negocio:"",whatsapp:"",email:"",direccion:"",fecha:""};
+  clientSlug = null;
+  lastDiagnostico = null;
+  ['input-nombre','input-whatsapp','input-email','input-direccion','input-fecha','input-negocio'].forEach(id=>{
+    document.getElementById(id).value="";
+  });
+  ORDER.forEach(z=>setNodeState(z, false));
+  showScreen('screen-start');
+  renderClientsList();
+}
+
+renderClientsList();
+</script>
+<div class="overlay" id="export-overlay">
+  <div class="panel ui">
+    <div class="panel-eyebrow" style="color:var(--navy);">EXPORTAR ÁRBOL</div>
+    <h2>Código para enviar por WhatsApp</h2>
+    <p class="sub">Este código no es un archivo ni un botón — es solo texto. Sigue estos pasos:</p>
+    <ol style="font-size:13.5px;color:#5c5748;line-height:1.7;padding-left:20px;margin:0 0 16px;">
+      <li>Dale a <b>"Copiar código"</b> abajo.</li>
+      <li>Abre WhatsApp y <b>pégalo y envíalo</b> a ti misma o al chat que quieras.</li>
+      <li>En el <b>otro dispositivo</b>, abre ese mensaje y mantén el dedo presionado sobre el texto hasta que aparezca "Copiar".</li>
+      <li>Abre esta misma app, ve al inicio, y <b>pega el código</b> en la casilla "Importar desde código".</li>
+      <li>Dale al botón <b>"📥 Importar desde código"</b> — listo, ya tienes el árbol de este cliente ahí.</li>
+    </ol>
+    <textarea id="export-textarea" readonly style="min-height:110px;font-family:monospace;font-size:11px;"></textarea>
+    <p id="copy-feedback" style="color:var(--tealdark);font-size:13px;min-height:18px;margin-top:6px;"></p>
+    <div class="panel-actions">
+      <button class="link-btn" onclick="closeExportOverlay()">Cerrar</button>
+      <button class="btn btn-gold" onclick="copyExportCode()">Copiar código</button>
+    </div>
+  </div>
+</div>
+
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(err => console.error("Service worker no registrado:", err));
+  });
+}
+</script>
+</body>
+</html>
